@@ -1,25 +1,12 @@
 import socket
-import binascii
+import os
 
-def start_proxy():
-    # Ask for proxy server IP address and port number
-    proxy_ip = input("Enter proxy server IP address: ")
-    proxy_port = int(input("Enter proxy server port number: "))
-
-    # Set up the proxy server to listen on the specified IP address and port
+def start_proxy(proxy_host, proxy_port, dest_host, dest_port):
+    # Set up the proxy server to listen on the specified port
     proxy_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    proxy_server.bind((proxy_ip, proxy_port))
+    proxy_server.bind((proxy_host, proxy_port))
     proxy_server.listen(1)
-    print(f'Proxy server listening on {proxy_ip}:{proxy_port}...')
-
-    # Ask for destination IP address and port number
-    dest_ip = input("Enter destination IP address: ")
-    dest_port = int(input("Enter destination port number: "))
-
-    # Save destination configuration to a hex-encoded .txt file
-    dest_config = f"{dest_ip}:{dest_port}"
-    with open('dest_config.txt', 'w') as f:
-        f.write(binascii.hexlify(dest_config.encode()).decode())
+    print(f'Proxy server listening on {proxy_host}:{proxy_port}...')
 
     # Wait for an incoming connection
     client_socket, client_address = proxy_server.accept()
@@ -27,8 +14,8 @@ def start_proxy():
 
     # Forward the connection to the destination server
     dest_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    dest_socket.connect((dest_ip, dest_port))
-    print(f'Connected to destination server {dest_ip}:{dest_port}')
+    dest_socket.connect((dest_host, dest_port))
+    print(f'Connected to destination server {dest_host}:{dest_port}')
 
     # Start forwarding data between the client and destination servers
     while True:
@@ -52,5 +39,19 @@ def start_proxy():
     client_socket.close()
     dest_socket.close()
 
+
 if __name__ == '__main__':
-    start_proxy()
+    # Ask for the proxy server and destination server details
+    proxy_host = input("Enter the proxy server's IP address: ")
+    proxy_port = int(input("Enter the proxy server's port: "))
+    dest_host = input("Enter the destination server's IP address: ")
+    dest_port = int(input("Enter the destination server's port: "))
+
+    # Save the destination configuration to a hex-encoded file
+    with open('destination_config.txt', 'w') as f:
+        f.write(dest_host + '\n')
+        f.write(str(dest_port) + '\n')
+    print(f'Destination configuration saved to {os.getcwd()}/destination_config.txt')
+
+    # Start the proxy server
+    start_proxy(proxy_host, proxy_port, dest_host, dest_port)
